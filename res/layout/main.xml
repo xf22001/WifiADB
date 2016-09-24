@@ -83,7 +83,7 @@
                 android:layout_marginTop="10dp"
                 android:layout_width="240dp"
                 android:layout_height="wrap_content"
-                android:text="adb connect 192.168.100.100:5555"
+                android:text=""
                 android:textColor="@color/gray_dark"
                 android:textSize="14sp"
                 android:gravity="center"
