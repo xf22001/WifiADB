@@ -20,7 +20,7 @@ import android.net.wifi.WifiManager;
 
 public class Utility {
 
-	private final static String TAG = "adbwifi.utility";
+	private final static String TAG = "wifiadb.utility";
 
 	private static int configPort = 5555;
 

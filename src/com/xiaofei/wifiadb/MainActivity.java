@@ -16,7 +16,7 @@ import android.widget.Toast;
 import com.xiaofei.wifiadb.lib.Utility;
 
 public class MainActivity extends Activity {
-	private final static String TAG = "adbwifi";
+	private final static String TAG = "wifiadb";
 
 	private LinearLayout toggleButton;
 	private TextView hint, toggleLeft, toggleRight;
@@ -123,13 +123,13 @@ public class MainActivity extends Activity {
 				if (ret) {
 					// switch successfully
 					if (toggleStatusLocal) {
-						Toast.makeText(MainActivity.this, "adb wifi service started", Toast.LENGTH_SHORT).show();
+						Toast.makeText(MainActivity.this, "wifi adbd started!", Toast.LENGTH_SHORT).show();
 					} else {
-						Toast.makeText(MainActivity.this, "adb wifi service stopped", Toast.LENGTH_SHORT).show();
+						Toast.makeText(MainActivity.this, "wifi adbd stopped!", Toast.LENGTH_SHORT).show();
 					}
 				} else {
 					// failed
-					Toast.makeText(MainActivity.this, "adb wifi service error", Toast.LENGTH_SHORT).show();
+					Toast.makeText(MainActivity.this, "没有root权限！", Toast.LENGTH_SHORT).show();
 				}
 			} else {
 				disableToggle();
@@ -141,25 +141,31 @@ public class MainActivity extends Activity {
 
 	private void setToggleStatus(boolean status) {
 		if (!status) {
-			toggleLeft.setText("OFF");
+			toggleLeft.setText("关");
 
 			if (Utility.isWifiConnected(this)) {
 				toggleLeft.setBackgroundColor(getResources().getColor(R.color.blue_holo));
-				hint.setText("adbd is stopped!");
+				hint.setText("");
 			} else {
 				toggleLeft.setBackgroundColor(getResources().getColor(R.color.gray_dark));
-				hint.setText("wifi is not connected");
+				hint.setText("没有WIFI连接!");
 			}
 
 			toggleRight.setText("");
 			toggleRight.setBackgroundColor(getResources().getColor(R.color.gray_light));
 		} else {
+			toggleRight.setText("开");
+
+			if (Utility.isWifiConnected(this)) {
+				toggleRight.setBackgroundColor(getResources().getColor(R.color.blue_holo));
+				hint.setText("adb connect " + Utility.getIp(this) + ":" + String.valueOf(Utility.getPort()));
+			} else {
+				toggleRight.setBackgroundColor(getResources().getColor(R.color.gray_dark));
+				hint.setText("没有root权限!");
+			}
+
 			toggleLeft.setText("");
 			toggleLeft.setBackgroundColor(getResources().getColor(R.color.gray_light));
-			toggleRight.setText("ON");
-			toggleRight.setBackgroundColor(getResources().getColor(R.color.blue_holo));
-
-			hint.setText("adb connect " + Utility.getIp(this) + ":" + String.valueOf(Utility.getPort()));
 		}
 	}
 }
