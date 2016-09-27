@@ -15,7 +15,7 @@ import android.widget.Toast;
 
 import com.xiaofei.wifiadb.lib.Utility;
 
-public class MainActivity extends Activity {
+public class WifiADB extends Activity {
 	private final static String TAG = "wifiadb";
 
 	private LinearLayout toggleButton;
@@ -49,29 +49,14 @@ public class MainActivity extends Activity {
 		this.toggleRight = (TextView) findViewById(R.id.toggleRight);
 
 		this.wifiStateReceiver = new WifiStateReceiver();
-		registerReceiver(wifiStateReceiver, new IntentFilter(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION));
+		registerReceiver(wifiStateReceiver, new IntentFilter(
+				WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION));
 	}
 
 	private void init() {
-		Log.e(TAG, new Exception().getStackTrace()[0].toString() + Utility.getIp(this));
-
-		if (!Utility.isWifiConnected(this)) {
-			Log.e(TAG, new Exception().getStackTrace()[0].toString());
-			disableToggle();
-		}
-
 		updateToggleStatus();
-	}
-
-	private void updateToggleStatus() {
-		boolean toggleStatus = Utility.getAdbdStatus();
-		setToggleStatus(toggleStatus);
 		toggleButton.setOnClickListener(null);
 		toggleButton.setOnClickListener(new ToggleClickListener());
-	}
-
-	private void disableToggle() {
-		Utility.setWifiAdbStatus(false);
 	}
 
 	private class WifiStateReceiver extends BroadcastReceiver {
@@ -80,18 +65,19 @@ public class MainActivity extends Activity {
 			final String action = intent.getAction();
 
 			if (action.equals(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION)) {
-				boolean connected = intent.getBooleanExtra(WifiManager.EXTRA_SUPPLICANT_CONNECTED, false);
+				boolean connected = intent.getBooleanExtra(
+						WifiManager.EXTRA_SUPPLICANT_CONNECTED, false);
 
 				if (connected) {
 					try {
 						int tryTimes = 100;
 
-						while (!Utility.isWifiConnected(MainActivity.this)) {
+						while (!Utility.isWifiConnected(WifiADB.this)) {
 							Thread.sleep(10);
 						}
 
 						while (tryTimes > 0) {
-							String ip = Utility.getIp(MainActivity.this);
+							String ip = Utility.getIp(WifiADB.this);
 
 							if (ip != null) {
 								break;
@@ -104,7 +90,7 @@ public class MainActivity extends Activity {
 						e.printStackTrace();
 					}
 				} else {
-					disableToggle();
+					Utility.setWifiAdbStatus(false);
 				}
 
 				updateToggleStatus();
@@ -115,57 +101,83 @@ public class MainActivity extends Activity {
 	private class ToggleClickListener implements View.OnClickListener {
 		@Override
 		public void onClick(View v) {
-			if (Utility.isWifiConnected(MainActivity.this)) {
+			int exitValue = 0;
+
+			if (Utility.isWifiConnected(WifiADB.this)) {
 				// try switch
 				boolean toggleStatusLocal = !Utility.getAdbdStatus();
-				boolean ret = Utility.setWifiAdbStatus(toggleStatusLocal);
+				exitValue = Utility.setWifiAdbStatus(toggleStatusLocal);
+				// Toast.makeText(WifiADB.this, "exitValue: " + exitValue,
+				// Toast.LENGTH_SHORT).show();
 
-				if (ret) {
+				if (exitValue == 0) {
 					// switch successfully
 					if (toggleStatusLocal) {
-						Toast.makeText(MainActivity.this, "wifi adbd started!", Toast.LENGTH_SHORT).show();
+						Toast.makeText(WifiADB.this, "wifi adbd started!",
+								Toast.LENGTH_SHORT).show();
 					} else {
-						Toast.makeText(MainActivity.this, "wifi adbd stopped!", Toast.LENGTH_SHORT).show();
+						Toast.makeText(WifiADB.this, "wifi adbd stopped!",
+								Toast.LENGTH_SHORT).show();
 					}
 				} else {
 					// failed
-					Toast.makeText(MainActivity.this, "没有root权限！", Toast.LENGTH_SHORT).show();
+					Toast.makeText(WifiADB.this, "wifi adbd service error!",
+							Toast.LENGTH_SHORT).show();
 				}
 			} else {
-				disableToggle();
+				exitValue = Utility.setWifiAdbStatus(false);
+				// Toast.makeText(WifiADB.this, "exitValue: " + exitValue,
+				// Toast.LENGTH_SHORT).show();
 			}
 
 			updateToggleStatus();
 		}
 	}
 
-	private void setToggleStatus(boolean status) {
-		if (!status) {
-			toggleLeft.setText("关");
+	private void updateToggleStatus() {
+		boolean toggleStatus = Utility.getAdbdStatus();
+		int exitValue = Utility.haveRoot();
+		// Toast.makeText(WifiADB.this, "exitValue: " + exitValue,
+		// Toast.LENGTH_SHORT).show();
 
-			if (Utility.isWifiConnected(this)) {
-				toggleLeft.setBackgroundColor(getResources().getColor(R.color.blue_holo));
-				hint.setText("");
-			} else {
-				toggleLeft.setBackgroundColor(getResources().getColor(R.color.gray_dark));
-				hint.setText("没有WIFI连接!");
-			}
-
-			toggleRight.setText("");
-			toggleRight.setBackgroundColor(getResources().getColor(R.color.gray_light));
+		if (exitValue == 1) {
+			hint.setText("没有root权限!");
 		} else {
-			toggleRight.setText("开");
+			if (toggleStatus) {
+				toggleLeft.setText("");
+				toggleLeft.setBackgroundColor(getResources().getColor(
+						R.color.gray_light));
 
-			if (Utility.isWifiConnected(this)) {
-				toggleRight.setBackgroundColor(getResources().getColor(R.color.blue_holo));
-				hint.setText("adb connect " + Utility.getIp(this) + ":" + String.valueOf(Utility.getPort()));
+				toggleRight.setText("开");
+
+				if (Utility.isWifiConnected(this)) {
+					toggleRight.setBackgroundColor(getResources().getColor(
+							R.color.blue_holo));
+					hint.setText("adb connect " + Utility.getIp(this) + ":"
+							+ String.valueOf(Utility.getPort()));
+				} else {
+					toggleRight.setBackgroundColor(getResources().getColor(
+							R.color.gray_dark));
+					hint.setText("没有WIFI连接");
+				}
+
 			} else {
-				toggleRight.setBackgroundColor(getResources().getColor(R.color.gray_dark));
-				hint.setText("没有root权限!");
-			}
+				toggleLeft.setText("关");
 
-			toggleLeft.setText("");
-			toggleLeft.setBackgroundColor(getResources().getColor(R.color.gray_light));
+				if (Utility.isWifiConnected(this)) {
+					toggleLeft.setBackgroundColor(getResources().getColor(
+							R.color.blue_holo));
+					hint.setText("");
+				} else {
+					toggleLeft.setBackgroundColor(getResources().getColor(
+							R.color.gray_dark));
+					hint.setText("没有WIFI连接");
+				}
+
+				toggleRight.setText("");
+				toggleRight.setBackgroundColor(getResources().getColor(
+						R.color.gray_light));
+			}
 		}
 	}
 }

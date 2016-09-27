@@ -6,6 +6,7 @@ import java.io.LineNumberReader;
 import java.lang.Process;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -13,6 +14,7 @@ import org.apache.http.conn.util.InetAddressUtils;
 
 import android.content.Context;
 import android.util.Log;
+import android.widget.Toast;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo.State;
 import android.net.wifi.WifiInfo;
@@ -40,7 +42,8 @@ public class Utility {
 
 	public static String getIp(Context context) {
 		try {
-			WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+			WifiManager wifiManager = (WifiManager) context
+					.getSystemService(Context.WIFI_SERVICE);
 			WifiInfo wifiInfo = wifiManager.getConnectionInfo();
 			int i = wifiInfo.getIpAddress();
 			String sAddr = int2ip(i);
@@ -54,8 +57,10 @@ public class Utility {
 	}
 
 	public static boolean isWifiConnected(Context context) {
-		ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-		State state = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState();
+		ConnectivityManager cm = (ConnectivityManager) context
+				.getSystemService(Context.CONNECTIVITY_SERVICE);
+		State state = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI)
+				.getState();
 
 		if (state == State.CONNECTED) {
 			return true;
@@ -69,7 +74,8 @@ public class Utility {
 
 		try {
 			Process process = Runtime.getRuntime().exec("ps | grep adbd");
-			InputStreamReader ir = new InputStreamReader(process.getInputStream());
+			InputStreamReader ir = new InputStreamReader(
+					process.getInputStream());
 			LineNumberReader input = new LineNumberReader(ir);
 			String str = input.readLine();
 
@@ -88,36 +94,58 @@ public class Utility {
 		return false;
 	}
 
-	// set adb wifi service
-	public static boolean setWifiAdbStatus(boolean status) {
+	public static int execSuCommand(List<String> inputs) {
+		int exitValue = 0;
 		Process p;
 
 		try {
 			p = Runtime.getRuntime().exec("su");
 
 			DataOutputStream os = new DataOutputStream(p.getOutputStream());
-			os.writeBytes("setprop service.adb.tcp.port " + String.valueOf(getPort()) + "\n");
-			os.writeBytes("stop adbd\n");
 
-			if (status) {
-				os.writeBytes("start adbd\n");
+			for (String input : inputs) {
+				os.writeBytes(input);
 			}
-
 			os.writeBytes("exit\n");
 			os.flush();
 
 			p.waitFor();
 
-			Log.e(TAG, new Exception().getStackTrace()[0].toString() + p.exitValue());
+			exitValue = p.exitValue();
 
-			if (p.exitValue() == 0) {
-				return true;
-			} else {
-				return false;
-			}
+			return exitValue;
 		} catch (Exception e) {
 			e.printStackTrace();
-			return false;
+			exitValue = -255;
+
+			return exitValue;
 		}
+	}
+
+	public static int haveRoot() {
+		int exitValue = 0;
+
+		List<String> inputs = new ArrayList<String>();
+
+		exitValue = execSuCommand(inputs);
+
+		return exitValue;
+	}
+
+	// set adb wifi service
+	public static int setWifiAdbStatus(boolean status) {
+		int exitValue = 0;
+
+		List<String> inputs = new ArrayList<String>();
+		inputs.add("setprop service.adb.tcp.port " + String.valueOf(getPort())
+				+ "\n");
+		inputs.add("stop adbd\n");
+		if (status) {
+			inputs.add("start adbd\n");
+		}
+
+		exitValue = execSuCommand(inputs);
+
+		return exitValue;
 	}
 }
