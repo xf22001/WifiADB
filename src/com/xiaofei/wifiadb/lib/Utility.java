@@ -42,8 +42,7 @@ public class Utility {
 
 	public static String getIp(Context context) {
 		try {
-			WifiManager wifiManager = (WifiManager) context
-					.getSystemService(Context.WIFI_SERVICE);
+			WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
 			WifiInfo wifiInfo = wifiManager.getConnectionInfo();
 			int i = wifiInfo.getIpAddress();
 			String sAddr = int2ip(i);
@@ -57,10 +56,8 @@ public class Utility {
 	}
 
 	public static boolean isWifiConnected(Context context) {
-		ConnectivityManager cm = (ConnectivityManager) context
-				.getSystemService(Context.CONNECTIVITY_SERVICE);
-		State state = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI)
-				.getState();
+		ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+		State state = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState();
 
 		if (state == State.CONNECTED) {
 			return true;
@@ -74,8 +71,7 @@ public class Utility {
 
 		try {
 			Process process = Runtime.getRuntime().exec("ps | grep adbd");
-			InputStreamReader ir = new InputStreamReader(
-					process.getInputStream());
+			InputStreamReader ir = new InputStreamReader(process.getInputStream());
 			LineNumberReader input = new LineNumberReader(ir);
 			String str = input.readLine();
 
@@ -137,8 +133,7 @@ public class Utility {
 		int exitValue = 0;
 
 		List<String> inputs = new ArrayList<String>();
-		inputs.add("setprop service.adb.tcp.port " + String.valueOf(getPort())
-				+ "\n");
+		inputs.add("setprop service.adb.tcp.port " + String.valueOf(getPort()) + "\n");
 		inputs.add("stop adbd\n");
 		if (status) {
 			inputs.add("start adbd\n");
