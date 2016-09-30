@@ -189,7 +189,8 @@ public class WifiADB extends Activity {
 					}
 				} else {
 					// failed
-					Toast.makeText(WifiADB.this, "wifi adbd service error!", Toast.LENGTH_SHORT).show();
+					String errorMsg = String.format("wifi adbd service error!(exitValue:%d)", exitValue);
+					Toast.makeText(WifiADB.this, errorMsg, Toast.LENGTH_SHORT).show();
 				}
 			} else {
 				// Toast.makeText(WifiADB.this, "exitValue: " + exitValue,
@@ -207,7 +208,7 @@ public class WifiADB extends Activity {
 		// Toast.makeText(WifiADB.this, "exitValue: " + exitValue,
 		// Toast.LENGTH_SHORT).show();
 
-		if (exitValue == 1) {
+		if (exitValue != 0) {
 			hint.setText("没有root权限!");
 		} else {
 			if (!wifiConnected) {
