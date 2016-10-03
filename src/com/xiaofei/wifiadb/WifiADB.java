@@ -68,7 +68,7 @@ public class WifiADB extends Activity {
 		// TODO Auto-generated method stub
 		super.onResume();
 		Log.e(TAG, new Exception().getStackTrace()[0].toString());
-		updateToggleStatus();
+		updateToggleStatus(false);
 	}
 
 	@Override
@@ -124,9 +124,7 @@ public class WifiADB extends Activity {
 	}
 
 	private void init() {
-		updateToggleStatus();
-		toggleButton.setOnClickListener(null);
-		toggleButton.setOnClickListener(new ToggleClickListener());
+		updateToggleStatus(false);
 	}
 
 	private class WifiStateReceiver extends BroadcastReceiver {
@@ -161,7 +159,7 @@ public class WifiADB extends Activity {
 				} else {
 				}
 
-				updateToggleStatus();
+				updateToggleStatus(false);
 			}
 		}
 	}
@@ -169,81 +167,95 @@ public class WifiADB extends Activity {
 	private class ToggleClickListener implements View.OnClickListener {
 		@Override
 		public void onClick(View v) {
-			int exitValue = 0;
-			boolean toggleStatus = Utility.getAdbdStatus();
-			boolean wifiConnected = Utility.isWifiConnected(WifiADB.this);
+			boolean success = updateToggleStatus(true);
 
-			if (wifiConnected) {
-				// try switch
-				boolean toggleStatusLocal = !toggleStatus;
-				exitValue = Utility.setWifiAdbStatus(toggleStatusLocal);
-				// Toast.makeText(WifiADB.this, "exitValue: " + exitValue,
-				// Toast.LENGTH_SHORT).show();
-
-				if (exitValue == 0) {
-					// switch successfully
-					if (toggleStatusLocal) {
-						Toast.makeText(WifiADB.this, "wifi adbd started!", Toast.LENGTH_SHORT).show();
-					} else {
-						Toast.makeText(WifiADB.this, "wifi adbd stopped!", Toast.LENGTH_SHORT).show();
-					}
-				} else {
-					// failed
-					String errorMsg = String.format("wifi adbd service error!(exitValue:%d)", exitValue);
-					Toast.makeText(WifiADB.this, errorMsg, Toast.LENGTH_SHORT).show();
-				}
-			} else {
-				// Toast.makeText(WifiADB.this, "exitValue: " + exitValue,
-				// Toast.LENGTH_SHORT).show();
+			if (!success) {
+				Toast.makeText(WifiADB.this, "Error!", Toast.LENGTH_SHORT).show();
 			}
-
-			updateToggleStatus();
 		}
 	}
 
-	private void updateToggleStatus() {
+	private boolean updateToggleStatus(boolean doToggle) {
 		int exitValue = Utility.haveRoot();
-		boolean toggleStatus = Utility.getAdbdStatus();
 		boolean wifiConnected = Utility.isWifiConnected(this);
-		// Toast.makeText(WifiADB.this, "exitValue: " + exitValue,
-		// Toast.LENGTH_SHORT).show();
+		boolean toggleStatus = Utility.getAdbdStatus();
+
+		boolean toggleStatusLocal = toggleStatus;
+		boolean enableButton = false;
+		String hintText = "";
+
+		boolean success = false;
+
+		toggleButton.setOnClickListener(null);
 
 		if (exitValue != 0) {
-			hint.setText("没有root权限!");
+			Toast.makeText(WifiADB.this, "exitValue: " + exitValue, Toast.LENGTH_SHORT).show();
+			hintText = "没有root权限";
 		} else {
-			if (!wifiConnected) {
-				exitValue = Utility.setWifiAdbStatus(false);
-				toggleStatus = false;
-			}
+			if (wifiConnected) {
+				enableButton = true;
 
-			if (toggleStatus) {
-				toggleLeft.setText("");
-				toggleLeft.setBackgroundColor(getResources().getColor(R.color.gray_light));
-
-				toggleRight.setText("开");
-
-				if (wifiConnected) {
-					toggleRight.setBackgroundColor(getResources().getColor(R.color.blue_holo));
-					hint.setText("adb connect " + Utility.getIp(this) + ":" + String.valueOf(Utility.getPort()));
+				if (doToggle) {
+					exitValue = Utility.setWifiAdbStatus(!toggleStatus);
+					if (exitValue == 0) {
+						toggleStatusLocal = !toggleStatus;
+						success = true;
+					} else {
+						Toast.makeText(WifiADB.this, "exitValue: " + exitValue, Toast.LENGTH_SHORT).show();
+					}
 				} else {
-					toggleRight.setBackgroundColor(getResources().getColor(R.color.gray_dark));
-					hint.setText("没有WIFI连接");
+					success = true;
 				}
 
+				if (toggleStatusLocal) {
+					hintText = "adb connect " + Utility.getIp(this) + ":" + String.valueOf(Utility.getPort());
+				}
+
+				toggleButton.setOnClickListener(new ToggleClickListener());
 			} else {
-				toggleLeft.setText("关");
-
-				if (wifiConnected) {
-					toggleLeft.setBackgroundColor(getResources().getColor(R.color.blue_holo));
-					hint.setText("");
+				if (toggleStatusLocal) {
+					exitValue = Utility.setWifiAdbStatus(false);
+					if (exitValue == 0) {
+						toggleStatusLocal = false;
+						success = true;
+					} else {
+						Toast.makeText(WifiADB.this, "exitValue: " + exitValue, Toast.LENGTH_SHORT).show();
+					}
 				} else {
-					toggleLeft.setBackgroundColor(getResources().getColor(R.color.gray_dark));
-					hint.setText("没有WIFI连接");
+					success = true;
 				}
 
-				toggleRight.setText("");
-				toggleRight.setBackgroundColor(getResources().getColor(R.color.gray_light));
+				hintText = "没有WIFI连接";
 			}
 		}
+
+		hint.setText(hintText);
+
+		if (toggleStatusLocal) {
+			toggleLeft.setText("");
+			toggleLeft.setBackgroundColor(getResources().getColor(R.color.gray_light));
+
+			toggleRight.setText("开");
+
+			if (enableButton) {
+				toggleRight.setBackgroundColor(getResources().getColor(R.color.blue_holo));
+			} else {
+				toggleRight.setBackgroundColor(getResources().getColor(R.color.gray_dark));
+			}
+
+		} else {
+			toggleLeft.setText("关");
+
+			if (enableButton) {
+				toggleLeft.setBackgroundColor(getResources().getColor(R.color.blue_holo));
+			} else {
+				toggleLeft.setBackgroundColor(getResources().getColor(R.color.gray_dark));
+			}
+
+			toggleRight.setText("");
+			toggleRight.setBackgroundColor(getResources().getColor(R.color.gray_light));
+		}
+
+		return success;
 	}
 }
