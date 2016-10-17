@@ -50,8 +50,11 @@ public class MonitorService extends Service {
 		mNM = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		Bundle bundle = new Bundle();
 		bundle.putString("from", "service");
-		wifiADB = new Intent(this, WifiADB.class).addFlags(
-				Intent.FLAG_ACTIVITY_NEW_TASK).putExtras(bundle);
+		wifiADB = new Intent(this, WifiADB.class)
+				.addFlags(
+						Intent.FLAG_ACTIVITY_NEW_TASK
+								| Intent.FLAG_ACTIVITY_CLEAR_TASK).putExtras(
+						bundle);
 
 		wifiStateReceiver = new WifiStateReceiver() {
 			@Override
