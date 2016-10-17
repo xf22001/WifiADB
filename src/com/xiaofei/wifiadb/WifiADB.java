@@ -43,8 +43,7 @@ public class WifiADB extends Activity {
 
 		Bundle bundle = this.getIntent().getExtras();
 		if (bundle != null && bundle.getString("from") != null) {
-			Intent intent = new Intent(com.xiaofei.wifiadb.MonitorService.stop);
-			sendBroadcast(intent);
+			Log.e(TAG, new Exception().getStackTrace()[0].toString());
 		}
 
 		initVal();
@@ -63,6 +62,11 @@ public class WifiADB extends Activity {
 		Log.e(TAG, new Exception().getStackTrace()[0].toString());
 		// TODO Auto-generated method stub
 		super.onStart();
+		if (wifiStateReceiver != null) {
+			registerReceiver(wifiStateReceiver, new IntentFilter(
+					WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION));
+		}
+		sendBroadcast(new Intent(com.xiaofei.wifiadb.MonitorService.stop));
 	}
 
 	@Override
@@ -113,25 +117,25 @@ public class WifiADB extends Activity {
 		Log.e(TAG, new Exception().getStackTrace()[0].toString());
 		// TODO Auto-generated method stub
 		super.onStop();
+		sendBroadcast(new Intent(com.xiaofei.wifiadb.MonitorService.start));
+		if (wifiStateReceiver != null) {
+			unregisterReceiver(wifiStateReceiver);
+		}
 	}
 
 	@Override
 	public void onDestroy() {
 		Log.e(TAG, new Exception().getStackTrace()[0].toString());
-		unregisterReceiver(wifiStateReceiver);
 		super.onDestroy();
-
-		Intent intent = new Intent(com.xiaofei.wifiadb.MonitorService.start);
-		sendBroadcast(intent);
 	}
 
 	private void initVal() {
-		this.toggleButton = (LinearLayout) findViewById(R.id.toggleLayout);
-		this.hint = (TextView) findViewById(R.id.hint);
-		this.toggleLeft = (TextView) findViewById(R.id.toggleLeft);
-		this.toggleRight = (TextView) findViewById(R.id.toggleRight);
+		toggleButton = (LinearLayout) findViewById(R.id.toggleLayout);
+		hint = (TextView) findViewById(R.id.hint);
+		toggleLeft = (TextView) findViewById(R.id.toggleLeft);
+		toggleRight = (TextView) findViewById(R.id.toggleRight);
 
-		this.wifiStateReceiver = new WifiStateReceiver() {
+		wifiStateReceiver = new WifiStateReceiver() {
 			@Override
 			public void onReceive(Context context, Intent intent) {
 				Log.e(TAG, new Exception().getStackTrace()[0].toString());
@@ -142,8 +146,6 @@ public class WifiADB extends Activity {
 				updateToggleStatus(false);
 			}
 		};
-		registerReceiver(wifiStateReceiver, new IntentFilter(
-				WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION));
 	}
 
 	private void init() {
