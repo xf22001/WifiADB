@@ -1,26 +1,24 @@
-package com.xiaofei.wifiadb;
-
-import com.xiaofei.wifiadb.lib.WifiStateReceiver;
+package com.xiaofei.wifiadb.lib;
 
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.xiaofei.wifiadb.R;
+import com.xiaofei.wifiadb.WifiADB;
+
 public class MonitorService extends Service {
 	private final String TAG = this.getClass().getName();
-	static final String start = "com.xiaofei.wifiadb.MonitorService.start";
-	static final String stop = "com.xiaofei.wifiadb.MonitorService.stop";
+	public static final String start = "com.xiaofei.wifiadb.lib.MonitorService.start";
+	public static final String stop = "com.xiaofei.wifiadb.lib.MonitorService.stop";
 	private NotificationManager mNM;
-	private WifiStateReceiver wifiStateReceiver;
+	private NetStateReceiver netStateReceiver;
 	private Intent wifiADB;
 
 	@Override
@@ -56,11 +54,10 @@ public class MonitorService extends Service {
 								| Intent.FLAG_ACTIVITY_CLEAR_TASK).putExtras(
 						bundle);
 
-		wifiStateReceiver = new WifiStateReceiver() {
+		netStateReceiver = new NetStateReceiver() {
 			@Override
 			public void onReceive(Context context, Intent intent) {
 				Log.e(TAG, new Exception().getStackTrace()[0].toString());
-
 				super.onReceive(context, intent);
 
 				if (wifiADB != null) {
@@ -85,9 +82,9 @@ public class MonitorService extends Service {
 	public void onDestroy() {
 		Log.e(TAG, new Exception().getStackTrace()[0].toString());
 
-		if (wifiStateReceiver != null) {
-			unregisterReceiver(wifiStateReceiver);
-			wifiStateReceiver = null;
+		if (netStateReceiver != null) {
+			unregisterReceiver(netStateReceiver);
+			netStateReceiver = null;
 		}
 
 		if (mNM != null) {
@@ -133,9 +130,8 @@ public class MonitorService extends Service {
 			startForeground(R.string.app_name, notification);
 		}
 
-		if (wifiStateReceiver != null) {
-			registerReceiver(wifiStateReceiver, new IntentFilter(
-					WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION));
+		if (netStateReceiver != null) {
+			registerReceiver(netStateReceiver, new NetStateFilter());
 		}
 	}
 }

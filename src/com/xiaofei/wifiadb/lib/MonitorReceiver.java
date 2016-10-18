@@ -1,4 +1,4 @@
-package com.xiaofei.wifiadb;
+package com.xiaofei.wifiadb.lib;
 
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningServiceInfo;
@@ -15,12 +15,11 @@ public class MonitorReceiver extends BroadcastReceiver {
 	public void onReceive(Context context, Intent intent) {
 		Log.e(TAG, new Exception().getStackTrace()[0].toString());
 
-		if (intent.getAction().equals(com.xiaofei.wifiadb.MonitorService.start)) {
+		if (intent.getAction().equals(MonitorService.start)) {
 			if (!getServiceStatus(context, MonitorService.class.getName())) {
 				context.startService(new Intent(context, MonitorService.class));
 			}
-		} else if (intent.getAction().equals(
-				com.xiaofei.wifiadb.MonitorService.stop)) {
+		} else if (intent.getAction().equals(MonitorService.stop)) {
 			if (getServiceStatus(context, MonitorService.class.getName())) {
 				context.stopService(new Intent(context, MonitorService.class));
 			}

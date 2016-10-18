@@ -29,14 +29,14 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".MonitorService"></service>
+        <service android:name=".lib.MonitorService"></service>
 
-        <receiver android:name=".MonitorReceiver" >
+        <receiver android:name=".lib.MonitorReceiver" >
             <intent-filter>
                 <!--action android:name="android.intent.action.BOOT_COMPLETED" /-->
                 <!--action android:name="android.intent.action.USER_PRESENT" /-->
-                <action android:name="com.xiaofei.wifiadb.MonitorService.start" />
-                <action android:name="com.xiaofei.wifiadb.MonitorService.stop" />
+                <action android:name="com.xiaofei.wifiadb.lib.MonitorService.start" />
+                <action android:name="com.xiaofei.wifiadb.lib.MonitorService.stop" />
             </intent-filter>
         </receiver>
 
