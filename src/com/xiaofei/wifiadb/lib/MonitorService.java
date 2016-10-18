@@ -17,9 +17,9 @@ public class MonitorService extends Service {
 	private final String TAG = this.getClass().getName();
 	public static final String start = "com.xiaofei.wifiadb.lib.MonitorService.start";
 	public static final String stop = "com.xiaofei.wifiadb.lib.MonitorService.stop";
-	private NotificationManager mNM;
-	private NetStateReceiver netStateReceiver;
-	private Intent wifiADB;
+	private NotificationManager mNM = null;
+	private NetStateReceiver netStateReceiver = null;
+	private Intent wifiADB = null;
 
 	@Override
 	public void onCreate() {
@@ -45,26 +45,32 @@ public class MonitorService extends Service {
 		 * ，并且最后一个传递的Intent对象将会再次传递过来。
 		 */
 
-		mNM = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-		Bundle bundle = new Bundle();
-		bundle.putString("from", "service");
-		wifiADB = new Intent(this, WifiADB.class)
-				.addFlags(
-						Intent.FLAG_ACTIVITY_NEW_TASK
-								| Intent.FLAG_ACTIVITY_CLEAR_TASK).putExtras(
-						bundle);
+		if (mNM == null) {
+			mNM = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+		}
 
-		netStateReceiver = new NetStateReceiver() {
-			@Override
-			public void onReceive(Context context, Intent intent) {
-				Log.e(TAG, new Exception().getStackTrace()[0].toString());
-				super.onReceive(context, intent);
+		if (wifiADB == null) {
+			Bundle bundle = new Bundle();
+			bundle.putString("from", "service");
+			wifiADB = new Intent(this, WifiADB.class).addFlags(
+					Intent.FLAG_ACTIVITY_NEW_TASK
+							| Intent.FLAG_ACTIVITY_CLEAR_TASK)
+					.putExtras(bundle);
+		}
 
-				if (wifiADB != null) {
-					context.startActivity(wifiADB);
+		if (netStateReceiver == null) {
+			netStateReceiver = new NetStateReceiver() {
+				@Override
+				public void onReceive(Context context, Intent intent) {
+					Log.e(TAG, new Exception().getStackTrace()[0].toString());
+					super.onReceive(context, intent);
+
+					if (wifiADB != null) {
+						context.startActivity(wifiADB);
+					}
 				}
-			}
-		};
+			};
+		}
 
 		handleCommand(intent);
 
@@ -82,15 +88,13 @@ public class MonitorService extends Service {
 	public void onDestroy() {
 		Log.e(TAG, new Exception().getStackTrace()[0].toString());
 
-		if (netStateReceiver != null) {
-			unregisterReceiver(netStateReceiver);
-			netStateReceiver = null;
-		}
+		unregisterReceiver(netStateReceiver);
+		stopForeground(true);
+		// mNM.cancel(R.string.app_name);
 
-		if (mNM != null) {
-			stopForeground(true);
-			// mNM.cancel(R.string.app_name);
-		}
+		mNM = null;
+		netStateReceiver = null;
+		wifiADB = null;
 
 		super.onDestroy();
 	}
@@ -100,16 +104,6 @@ public class MonitorService extends Service {
 		// In this sample, we'll use the same text for the ticker and the
 		// expanded notification
 
-		// The PendingIntent to launch our activity if the user selects this
-		// notification
-		PendingIntent contentIntent;
-
-		if (wifiADB != null) {
-			contentIntent = PendingIntent.getActivity(this, 0, wifiADB, 0);
-		} else {
-			contentIntent = null;
-		}
-
 		CharSequence text = "running!";
 		// Set the icon, scrolling text and timestamp
 		Notification notification = new Notification(R.drawable.app_logo, text,
@@ -118,20 +112,21 @@ public class MonitorService extends Service {
 		notification.flags |= Notification.FLAG_NO_CLEAR;
 		notification.flags |= Notification.FLAG_FOREGROUND_SERVICE;
 
+		// The PendingIntent to launch our activity if the user selects this
+		// notification
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+				wifiADB, 0);
+
 		// Set the info for the views that show in the notification panel.
 		notification.setLatestEventInfo(this, getText(R.string.app_name), text,
 				contentIntent);
 
 		// Send the notification.
 
-		if (mNM != null) {
-			// mNM.notify("wifiadb notification tag", R.string.app_name,
-			// notification);
-			startForeground(R.string.app_name, notification);
-		}
+		// mNM.notify("wifiadb notification tag", R.string.app_name,
+		// notification);
+		startForeground(R.string.app_name, notification);
 
-		if (netStateReceiver != null) {
-			registerReceiver(netStateReceiver, new NetStateFilter());
-		}
+		registerReceiver(netStateReceiver, new NetStateFilter());
 	}
 }
